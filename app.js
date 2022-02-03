@@ -7,15 +7,18 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const { celebrate, Joi } = require('celebrate');
 const limiter = require('./libraries/rate-limiter');
+
 const handleErrors = require('./handle-errors');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const NotFoundError = require('./errors/not-found-err');
+
 const auth = require('./middlewares/auth');
 const { createUser, login } = require('./controllers/user');
+
 const api = require('./routes');
 
 const { DB, NODE_ENV } = process.env;
-const { PORT = 5000 } = process.env;
+const { PORT = 3000 } = process.env;
 
 const app = express();
 
@@ -29,7 +32,7 @@ async function start() {
       useUnifiedTopology: true,
     });
   } catch (error) {
-    return `application error: status 500 ${error}`;
+    return `Init application error: status 500 ${error}`;
   }
   return null;
 }
@@ -44,6 +47,9 @@ const allowedCors = [
   'http://dip.nomoredomains.work/',
   'https://dip.nomoredomains.work/',
   'http://localhost:3000',
+  'https://localhost:3000',
+  'http://localhost:5000',
+  'https://localhost:5000',
 ];
 
 app.use((req, res, next) => {
@@ -70,15 +76,7 @@ app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser('secret'));
 
-app.use(requestLogger);
-
-app.use(api);
-
-app.use('/*', (req, res, next) => {
-  next(new NotFoundError('Запрашиваемый ресурс не найден'));
-});
-
-app.use(errorLogger);
+app.use(requestLogger); // подключаем логгер запросов
 
 app.post('/signup', celebrate({
   body: Joi.object().keys({
@@ -94,6 +92,15 @@ app.post('/signin', celebrate({
   }),
 }), login);
 app.use(auth);
+
+app.use(api);
+
+app.use('/*', (req, res, next) => {
+  next(new NotFoundError('Запрашиваемый ресурс не найден'));
+});
+
+app.use(errorLogger);
+
 app.use((err, req, res, next) => {
   handleErrors(err, req, res);
 });
