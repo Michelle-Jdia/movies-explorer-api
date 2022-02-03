@@ -5,12 +5,13 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const { celebrate, Joi } = require('celebrate');
 const limiter = require('./libraries/rate-limiter');
-
 const handleErrors = require('./handle-errors');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const NotFoundError = require('./errors/not-found-err');
-
+const auth = require('./middlewares/auth');
+const { createUser, login } = require('./controllers/user');
 const api = require('./routes');
 
 const { DB, NODE_ENV } = process.env;
@@ -42,13 +43,13 @@ app.use(limiter);
 const allowedCors = [
   'http://dip.nomoredomains.work/',
   'https://dip.nomoredomains.work/',
-  'http://localhost:3000/',
+  'http://localhost:3000',
 ];
 
 app.use((req, res, next) => {
   const { origin } = req.headers;
   if (allowedCors.includes(origin)) {
-    res.header('Access-Contol-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Origin', origin);
   }
 
   const { method } = req;
@@ -71,7 +72,7 @@ app.use(cookieParser('secret'));
 
 app.use(requestLogger);
 
-app.use('/api', api);
+app.use(api);
 
 app.use('/*', (req, res, next) => {
   next(new NotFoundError('Запрашиваемый ресурс не найден'));
@@ -79,6 +80,20 @@ app.use('/*', (req, res, next) => {
 
 app.use(errorLogger);
 
+app.post('/signup', celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().required().min(2).max(30),
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), createUser);
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), login);
+app.use(auth);
 app.use((err, req, res, next) => {
   handleErrors(err, req, res);
 });

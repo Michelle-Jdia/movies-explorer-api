@@ -24,7 +24,7 @@ router.post('/signin', celebrate({
 
 router.use(auth);
 
-router.use('/users', userRoutes);
-router.use('/movies', movieRoutes);
+router.use('/user', userRoutes);
+router.use('/movie', movieRoutes);
 
 module.exports = router;
