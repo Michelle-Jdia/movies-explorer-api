@@ -56,22 +56,20 @@ module.exports.createMovie = async (req, res, next) => {
 module.exports.deleteMovie = async (req, res, next) => {
   try {
     const deletedMovie = await Movie.findById(req.params.movieId);
+
     if (deletedMovie && req.user._id === deletedMovie.owner.toString()) {
-      try {
-        const movie = await Movie.findByIdAndRemove(req.params.movieId);
-        return res.send({ movie });
-      } catch {
-        return next(new Error());
-      }
-    } else if (!deletedMovie) {
-      return next(new NotFound('Фильм не найден'));
+      const movie = await Movie.findByIdAndRemove(req.params.movieId);
+      return res.send({ movie });
+    } if (!deletedMovie) {
+      throw next(new NotFound('Фильм не найден'));
     } else {
       return next(new ForbiddenError('Нельзя удалить фильм другого пользователя'));
     }
   } catch (err) {
     if (err.name === 'CastError') {
-      return next(new NotFound('Фильм не найден'));
+      throw next(new NotFound('Фильм не найден'));
     }
+
     return next(new Error());
   }
 };

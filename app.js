@@ -48,8 +48,6 @@ const allowedCors = [
   'https://dip.nomoredomains.work/',
   'http://localhost:3000',
   'https://localhost:3000',
-  'http://localhost:5000',
-  'https://localhost:5000',
 ];
 
 app.use((req, res, next) => {
@@ -85,12 +83,14 @@ app.post('/signup', celebrate({
     password: Joi.string().required(),
   }),
 }), createUser);
+
 app.post('/signin', celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
     password: Joi.string().required(),
   }),
 }), login);
+
 app.use(auth);
 
 app.use(api);
@@ -101,7 +101,7 @@ app.use('/*', (req, res, next) => {
 
 app.use(errorLogger);
 
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   handleErrors(err, req, res);
 });
 

@@ -2,7 +2,6 @@ const { JWT_SECRET, NODE_ENV } = process.env;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
-
 // errors import
 const BadRequest = require('../errors/bad-req-err');
 const NotFound = require('../errors/not-found-err');
@@ -15,7 +14,7 @@ module.exports.getCurrentUser = async (req, res, next) => {
     if (user) {
       return res.send({ user });
     }
-    return next(new NotFound('Пользователь не найден'));
+    throw next(new NotFound('Пользователь не найден'));
   } catch (err) {
     if (err.name === 'CastError') {
       return next(new NotFound('Пользователь не найден'));
@@ -36,7 +35,7 @@ module.exports.updateUser = async (req, res, next) => {
     if (user) {
       return res.send({ user });
     }
-    return next(new NotFound('Пользователь не найден'));
+    throw next(new NotFound('Пользователь не найден'));
   } catch (err) {
     if (err.name === 'MongoError' && err.code === 11000) {
       return next(new ConflictError('Пользователь с таким email уже существует'));
@@ -70,10 +69,10 @@ module.exports.createUser = async (req, res, next) => {
     return next(new BadRequest('Введены некорректные данные пользователя'));
   } catch (err) {
     if (err.name === 'MongoError' && err.code === 11000) {
-      return next(new ConflictError('Пользователь с таким email уже существует'));
+      next(new ConflictError('Пользователь с таким email уже существует'));
     }
     if (err.name === 'ValidationError') {
-      return next(new BadRequest('Введены некорректные данные пользователя'));
+      next(new BadRequest('Введены некорректные данные пользователя'));
     }
     return next(new Error());
   }

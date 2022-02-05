@@ -9,7 +9,7 @@ const { getSavedMovies, createMovie, deleteMovie } = require('../controllers/mov
 const method = (value) => {
   const correctLink = validator.isURL(value, { require_protocol: true });
   if (!correctLink) {
-    return new BadRequest('Введена некорректная ссылка');
+    throw new BadRequest('Введена некорректная ссылка');
   }
   return value;
 };
