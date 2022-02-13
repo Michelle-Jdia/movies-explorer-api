@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "npx eslint .",
     "start": "node app.js",
+    "start:prod": "node app.js NODE_ENV=production",
     "dev": "nodemon app.js"
   },
   "keywords": [],
