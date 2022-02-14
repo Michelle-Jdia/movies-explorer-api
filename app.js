@@ -5,20 +5,20 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-// const { celebrate, Joi } = require('celebrate');
+const { celebrate, Joi } = require('celebrate');
 const limiter = require('./libraries/rate-limiter');
 
 const handleErrors = require('./handle-errors');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const NotFoundError = require('./errors/not-found-err');
 
-// const auth = require('./middlewares/auth');
-// const { createUser, login } = require('./controllers/user');
+const auth = require('./middlewares/auth');
+const { createUser, login } = require('./controllers/user');
 
 const api = require('./routes');
 
 const { DB, NODE_ENV } = process.env;
-const { PORT = 3000 } = process.env;
+const { PORT = 5000 } = process.env;
 
 const app = express();
 
@@ -44,8 +44,8 @@ app.set('trust proxy', 1);
 app.use(limiter);
 
 const allowedCors = [
-  'http://dip.nomoredomains.work/',
-  'https://dip.nomoredomains.work/',
+  'http://dip.nomoredomains.work',
+  'https://dip.nomoredomains.work',
   'http://localhost:3000',
   'https://localhost:3000',
 ];
@@ -76,24 +76,24 @@ app.use(cookieParser('secret'));
 
 app.use(requestLogger); // подключаем логгер запросов
 
-// app.post('/signup', celebrate({
-//   body: Joi.object().keys({
-//     name: Joi.string().required().min(2).max(30),
-//     email: Joi.string().required().email(),
-//     password: Joi.string().required(),
-//   }),
-// }), createUser);
+app.post('/signup', celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().required().min(2).max(30),
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), createUser);
 
-// app.post('/signin', celebrate({
-//   body: Joi.object().keys({
-//     email: Joi.string().required().email(),
-//     password: Joi.string().required(),
-//   }),
-// }), login);
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), login);
 
-// app.use(auth);
+app.use(auth);
 
-app.use('/api', api);
+app.use(api);
 
 app.use('/*', (req, res, next) => {
   next(new NotFoundError('Запрашиваемый ресурс не найден'));
@@ -101,8 +101,8 @@ app.use('/*', (req, res, next) => {
 
 app.use(errorLogger);
 
-app.use((err, req, res) => {
-  handleErrors(err, req, res);
+app.use((err, req, res, next) => {
+  handleErrors(err, req, res, next);
 });
 
 start();
